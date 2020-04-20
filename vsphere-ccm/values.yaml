@@ -1,0 +1,10 @@
+config:
+  vsphereconf: |
+    [Global]
+    cluster-id = "Cluster1"
+    [VirtualCenter "52.118.11.86"]
+    insecure-flag = "true"
+    user = "Administrator@vsphere.local"
+    password = "sdfsdsdfsd"
+    port = "443"
+    datacenters = "Datacenter"
