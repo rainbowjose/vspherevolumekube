@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#VM_NAME=$(kubectl get nodes -o json | jq '.items[]|[.metadata.name]')
-#VM_UUID=$(kubectl get nodes -o json | jq '.items[]|[.status.nodeInfo.systemUUID]')
 PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"' | tr '[:upper:]' '[:lower:]')
 for vm in $PAIRS; do
 	VM_NAME=${vm%,*}
