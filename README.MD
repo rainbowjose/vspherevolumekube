@@ -12,7 +12,7 @@ It can be applied by script:
 ```
 #!/bin/bash
 
-PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"' | tr '[:upper:]' '[:lower:]')
+PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"')
 for vm in $PAIRS; do
 	VM_NAME=${vm%,*}
 	VM_UUID=${vm#*,}
