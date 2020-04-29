@@ -8,7 +8,7 @@ Upadate your vCenter also.
 
 **1. ProviderID env AND disk.EnableUUID = TRUE on ALL nodes.**
 
-It can be applied by script:
+Correct ProviderID can be applied by script:
 ```
 #!/bin/bash
 
