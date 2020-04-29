@@ -6,7 +6,7 @@ or, in other case, from your vCenter
 
 Upadate your vCenter also.
 
-**1. ProviderID env on ALL nodes.**
+**1. ProviderID env AND disk.EnableUUID = TRUE on ALL nodes.**
 
 It can be applied by script:
 ```
