@@ -1,0 +1,118 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: vsphere-csi-controller
+  namespace: kube-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: vsphere-csi-controller-role
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csidrivers"]
+    verbs: ["create", "delete"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update", "create", "delete"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: vsphere-csi-controller-binding
+subjects:
+  - kind: ServiceAccount
+    name: vsphere-csi-controller
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: vsphere-csi-controller-role
+  apiGroup: rbac.authorization.k8s.io
+#---
+#kind: SecurityContextConstraints
+#apiVersion: security.openshift.io/v1
+#metadata:
+#  name: vsphere-csi-scc
+#allowPrivilegedContainer: true
+#runAsUser:
+#  type: RunAsAny
+#seLinuxContext:
+#  type: RunAsAny
+#fsGroup:
+#  type: RunAsAny
+#supplementalGroups:
+#  type: RunAsAny
+#users:
+#- system:serviceaccount:kube-system:vsphere-csi-controller
+---
+allowHostDirVolumePlugin: true
+allowHostIPC: true
+allowHostNetwork: true
+allowHostPID: true
+allowHostPorts: true
+allowPrivilegedContainer: true
+allowedCapabilities: 
+- '*'
+apiVersion: security.openshift.io/v1
+defaultAddCapabilities: [] 
+fsGroup: 
+  type: RunAsAny
+groups: 
+- system:cluster-admins
+- system:nodes
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    kubernetes.io/description: 'privileged allows access to all privileged and host
+      features and the ability to run as any user, any group, any fsGroup, and with
+      any SELinux context.  WARNING: this is the most relaxed SCC and should be used
+      only for cluster administration. Grant with caution.'
+  creationTimestamp: null
+  name: vsphere-csi-scc
+priority: null
+readOnlyRootFilesystem: false
+requiredDropCapabilities: [] 
+runAsUser: 
+  type: RunAsAny
+seLinuxContext: 
+  type: RunAsAny
+seccompProfiles:
+- '*'
+supplementalGroups: 
+  type: RunAsAny
+users: 
+- system:serviceaccount:kube-system:vsphere-csi-controller
+- system:serviceaccount:default:registry
+- system:serviceaccount:default:router
+volumes:
+- '*'

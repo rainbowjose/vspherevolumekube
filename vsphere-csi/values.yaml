@@ -1,0 +1,10 @@
+config:
+  vsphereconf: |
+    [Global]
+    cluster-id = "Cluster1"
+    [VirtualCenter "2122.6229.621.63"]
+    insecure-flag = "true"
+    user = "Administrator@vsphere.local"
+    password = "Ldksdfsdova1sd2"
+    port = "443"
+    datacenters = "Datacenter"

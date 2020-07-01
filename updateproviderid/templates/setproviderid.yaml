@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: set-script-config
+  namespace: default
+data:
+  set.sh: |
+    #!/bin/bash
+    PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"')
+    for vm in $PAIRS; do
+    	VM_NAME=${vm%,*}
+    	v=${vm#*,}
+    	echo Patching $VM_NAME with $VM_UUID
+    	kubectl patch node $VM_NAME -p "{\"spec\":{\"providerID\":\"vsphere://${v:6:2}${v:4:2}${v:2:2}${v:0:2}-${v:11:2}${v:9:2}-${v:16:2}${v:14:2}${v:18:36}\"}}"
+    done
+  setb.sh: |
+    #!/bin/bash
+    
+    export GOVC_USERNAME='administrator@vsphere.local'
+    export GOVC_INSECURE=1
+    export GOVC_PASSWORD='bsdfgsdgfadfgadf!'
+    export GOVC_URL='63.148.11.83'
+    DATACENTER='Datacenter'
+    #FOLDER='<path>'
+    # In my case I'm using a prefix for the VM's, so grep'ing is necessary.
+    # You can remove it if the folder you are using only contains the machines you need.
+    VM_PREFIX='<prefix>'
+    IFS=$'\n'
+    for vm in $(govc ls "/$DATACENTER/vm/$FOLDER" | grep $VM_PREFIX); do
+      MACHINE_INFO=$(govc vm.info -json -dc=$DATACENTER -vm.ipath="/$vm" -e=true)
+      # My VMs are created on vmware with upper case names, so I need to edit the names with awk
+      VM_NAME=$(jq -r ' .VirtualMachines[] | .Name' <<< $MACHINE_INFO | awk '{print tolower($0)}')
+      # UUIDs come in lowercase, upper case then
+      VM_UUID=$( jq -r ' .VirtualMachines[] | .Config.Uuid' <<< $MACHINE_INFO | awk '{print toupper($0)}')
+      echo "Patching $VM_NAME with UUID:$VM_UUID"
+      # This is done using dry-run to avoid possible mistakes, remove when you are confident you got everything right.
+      kubectl patch node $VM_NAME -p "{\"spec\":{\"providerID\":\"vsphere://$VM_UUID\"}}"
+    done
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: providerid
+  namespace: default
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: providerid-role
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: providerid-binding
+subjects:
+  - kind: ServiceAccount
+    name: providerid
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: providerid-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}"
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    #"helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      serviceAccountName: providerid
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      restartPolicy: Never
+      containers:
+      - name: post-install-job
+        image: "dtzar/helm-kubectl"
+        #command: ["/bin/sh", "-c", "apk add jq && kubectl config set-credentials admin && kubectl get nodes -o json | jq '.items[]|[.metadata.name, .spec.providerID, .status.nodeInfo.systemUUID]'"]
+        #command: ["/bin/sh", "-c", "apk add jq curl && curl -L $GOVCDN | gunzip > /usr/bin/govc && chmod +x /usr/bin/govc && /script/set.sh"]
+        command: ["/bin/sh", "-c", "apk add jq && /script/set.sh"]
+        volumeMounts:
+         - name: set-script
+           mountPath: /script/set.sh
+           subPath: set.sh
+        #env:
+        #- name: GOVCDN
+        #  value: "https://github.com/vmware/govmomi/releases/download/v0.22.1/govc_linux_amd64.gz"
+      volumes:
+        - name: set-script
+          configMap:
+            name: set-script-config
+            defaultMode: 0777
