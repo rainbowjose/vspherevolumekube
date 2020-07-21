@@ -31,9 +31,9 @@ it may be useful if you do not want to run any scripts for some reasons.
 Check presence of the necessary parameters:
 ```kubectl get nodes -o json | jq '.items[]|[.metadata.name, .spec.providerID, .status.nodeInfo.systemUUID]'```
 
-**2. vSphere CPI and vSphere CSI things installed in your kubernetes cluster**
+**2. vSphere CSI things installed in your kubernetes cluster**
 
-CPI - Cloud Provider Interface, a thing for aplying UUIDs and some unobivious managing shit.
+CPI - Cloud Provider Interface, a thing for aplying UUIDs and some unobivious managing shit. You don't need it!
 
 https://github.com/kubernetes/cloud-provider-vsphere
 
