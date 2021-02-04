@@ -17,6 +17,7 @@ data:
   check.sh: |
     #!/bin/bash
     kubectl get nodes -o json | jq '.items[]|[.metadata.name, .spec.providerID, .status.nodeInfo.systemUUID]'
+    done
     
   #etb.sh: |
   # #!/bin/bash
