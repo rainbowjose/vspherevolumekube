@@ -10,7 +10,7 @@ Upadate your vCenter also.
 
 Correct ProviderID can be applied by script:
 ```
-#!/bin/bash
+    #!/bin/bash
     PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"')
     for vm in $PAIRS; do
     	VM_NAME=${vm%,*}
