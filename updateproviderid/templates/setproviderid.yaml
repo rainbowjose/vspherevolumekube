@@ -13,6 +13,10 @@ data:
     	echo Patching $VM_NAME with $VM_UUID
     	kubectl patch node $VM_NAME -p "{\"spec\":{\"providerID\":\"vsphere://${v:6:2}${v:4:2}${v:2:2}${v:0:2}-${v:11:2}${v:9:2}-${v:16:2}${v:14:2}${v:18:36}\"}}"
     done
+    
+  check.sh |
+    kubectl get nodes -o json | jq '.items[]|[.metadata.name, .spec.providerID, .status.nodeInfo.systemUUID]'
+    
   setb.sh: |
     #!/bin/bash
     
@@ -98,12 +102,15 @@ spec:
         image: "dtzar/helm-kubectl"
         #command: ["/bin/sh", "-c", "apk add jq && kubectl config set-credentials admin && kubectl get nodes -o json | jq '.items[]|[.metadata.name, .spec.providerID, .status.nodeInfo.systemUUID]'"]
         #command: ["/bin/sh", "-c", "apk add jq curl && curl -L $GOVCDN | gunzip > /usr/bin/govc && chmod +x /usr/bin/govc && /script/set.sh"]
-        command: ["/bin/sh", "-c", "apk add jq && /script/set.sh"]
+        command: ["/bin/sh", "-c", "apk add jq && /script/set.sh" && /script/check.sh]
         volumeMounts:
          - name: set-script
            mountPath: /script/set.sh
            subPath: set.sh
-        #env:
+         - name: check-script
+           mountPath: /script/check.sh
+           subPath: check.sh
+        #env
         #- name: GOVCDN
         #  value: "https://github.com/vmware/govmomi/releases/download/v0.22.1/govc_linux_amd64.gz"
       volumes:
