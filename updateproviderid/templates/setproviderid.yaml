@@ -31,7 +31,6 @@ data:
   # In my case I'm using a prefix for the VM's, so grep'ing is necessary.
   # You can remove it if the folder you are using only contains the machines you need.
   VM_PREFIX='<prefix>'
-  IFS=$'\n'
   for vm in $(govc ls "/$DATACENTER/vm/$FOLDER" | grep $VM_PREFIX); do
     MACHINE_INFO=$(govc vm.info -json -dc=$DATACENTER -vm.ipath="/$vm" -e=true)
     # My VMs are created on vmware with upper case names, so I need to edit the names with awk
