@@ -11,13 +11,13 @@ Upadate your vCenter also.
 Correct ProviderID can be applied by script:
 ```
 #!/bin/bash
-PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"')
-for vm in $PAIRS; do
-	VM_NAME=${vm%,*}
-	v=${vm#*,}
-	echo Patching $VM_NAME with $v
-	kubectl patch node $VM_NAME -p "{\"spec\":{\"providerID\":\"vsphere://${v:6:2}${v:4:2}${v:2:2}${v:0:2}-${v:11:2}${v:9:2}-${v:16:2}${v:14:2}${v:18:36}\"}}"
-done
+    PAIRS=$(kubectl get nodes -o json | jq -r -c '.items[]|[.metadata.name, .status.nodeInfo.systemUUID]' | tr -d '[]"')
+    for vm in $PAIRS; do
+    	VM_NAME=${vm%,*}
+    	v=${vm#*,}
+    	echo Patching $VM_NAME with $VM_UUID
+    	kubectl patch node $VM_NAME -p "{\"spec\":{\"providerID\":\"vsphere://${v:6:2}${v:4:2}${v:2:2}${v:0:2}-${v:11:2}${v:9:2}-${v:16:2}${v:14:2}${v:18:36}\"}}"
+    done
 ```
 
 OR you can use updateproviderid package in that way:
